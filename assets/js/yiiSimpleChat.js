@@ -9,14 +9,22 @@
  * @author Buba Suma <bubasuma@gmail.com>
  * @since 1.0
  */
+ var simpleChat = false;
 (function ($) {
-    var simpleChat = {
+     simpleChat = {
         init: function () {
             this.messenger = $('#messenger');
             this.messages = this.messenger.find('#msg-container');
             this.conversations = $('#conversations');
             this.messages.get(0).scrollTop = this.messages.get(0).scrollHeight;
+            this.handler1 = false;
+            this.handler2 = false;
         },
+        clearIntervals:  function(){
+    	    clearInterval(this.handler1);
+    	    clearInterval(this.handler2);
+        },
+
         registerListeners: function () {
             var self = this;
             $(document).ready(function () {
@@ -25,20 +33,27 @@
                 var conversationsLoader = $('#conversations-loader');
 
                 var tempHandler4 = function () {
-                    var current = self.conversations.yiiSimpleChatConversations('widget').current;
+            	    if (typeof self.conversations.yiiSimpleChatConversations !== 'function') {
+            		var current = JSON.parse($('#conversation').data('current'));
+            		console.log('handler4');
+            	    } else {
+                	var current = self.conversations.yiiSimpleChatConversations('widget').current;
+		    }
                     // check whether the current conversation has unread messages
                     if( current.newMessages.count){
-                        var $conversation = self.conversations.yiiSimpleChatConversations('find', current.contact.id, 'contact');
-                        if($conversation.length){
-                            $conversation.find('.fa-circle').trigger('click');
-                        }else{
-                            self.conversations.yiiSimpleChatConversations('read');
-                        }
+                	if (typeof self.conversations.yiiSimpleChatConversations === 'function')  {
+                            var $conversation = self.conversations.yiiSimpleChatConversations('find', current.contact.id, 'contact');
+	                    if($conversation.length){
+	                        $conversation.find('.fa-circle').trigger('click');
+        	            }else{
+		                self.conversations.yiiSimpleChatConversations('read');
+                	    }
+                	}
                     }
                     var re = /\/(\s*\d+\s*)$/;
                     if (!location.href.match(re)) {
-                        var url = location.href + '/' + current.contact.id;
-                        window.history.replaceState(null, document.title, url);
+                        var url = location.href + '/' + current.contact.id + '/' + current.object.id;
+                        //window.history.replaceState(null, document.title, url);
                     }
                     self.messenger.off('initialized', tempHandler4)
                 };
@@ -67,6 +82,7 @@
                         //reinitialize the chat
                         var current = {
                             contact: $conversation.data('contactinfo'),
+                            object: $conversation.data('objectinfo'),
                             deleteUrl: $conversation.data('deleteurl'),
                             readUrl: $conversation.data('readurl'),
                             unreadUrl: $conversation.data('unreadurl'),
@@ -106,7 +122,11 @@
                             $conversation.addClass('current').siblings('.current').removeClass('current');
 
                             // set this conversation as current conversation
-                            self.conversations.yiiSimpleChatConversations('widget').current = current;
+                            if (typeof self.conversations.yiiSimpleChatConversations !== 'function') {
+                        	$('#conversations').data('current',JSON.stringify(current));
+			    } else {
+                        	self.conversations.yiiSimpleChatConversations('widget').current = current;
+                    	    }
 
                             // check whether the current conversation has unread messages
                             if ($conversation.is('.unread')) {
@@ -114,10 +134,10 @@
                                 $conversation.find('.fa-circle').trigger('click');
                             }
                             // update the window state
-                            document.title = current.contact.name;
+                            document.title = current.object.formattedAddressForSite;
                             var re = /\/(\s*\d+\s*)/;
-                            var url = location.href.replace(re, '/' + current.contact.id);
-                            window.history.replaceState(null, document.title, url);
+                            //var url = location.href.replace(re, '/' + current.contact.id + '/'+current.object.id);
+                            //window.history.replaceState(null, document.title, url);
                             // remove itself as handler
                             self.messenger.off('success.load', tempHandler3);
                         };
@@ -125,8 +145,13 @@
                         // this handler is executed once after it has been registered
                         // Because it removes itself as handler at the end of its body
                         self.messenger.on('success.load', tempHandler3);
+                        //reload object description box
+                        var desc_url = $('#conversation-description').data('url');
+                        $('#conversation-description').load(desc_url+current.object.id);
+                        
                         //reload messages
                         self.messenger.yiiSimpleChatMessages('reload');
+                        
 
                     })
                     // on click delete icon
@@ -212,7 +237,7 @@
                             conversationsLoader.hide();
                         }
                     })
-                    // on conversations load successful
+                    // on conversations load successful there
                     .on('success.load', function (e, type, data) {
                         var widget = self.conversations.yiiSimpleChatConversations('widget');
                         var index, conversation;
@@ -249,7 +274,7 @@
                                     settings: widget.settings
                                 };
                                 // remove conversation if it existed before
-                                var $conversation = self.conversations.yiiSimpleChatConversations('find', conversation.model.contact.id, 'contact');
+                                var $conversation = self.conversations.yiiSimpleChatConversations('find', conversation.model.contact.id+'_'+conversation.model.object_id, 'contact_object');
                                 if ($conversation.length) {
                                     $conversation.remove();
                                 }
@@ -357,9 +382,10 @@
                                     key: data['keys'][index],
                                     index: index,
                                     user: options.user,
-                                    sender: data['models'][index]['sender_id'] == options.user.id ? options.user : options.contact,
+                                    sender: data['models'][index]['senderId'] == options.user.id ? options.user : options.contact,
                                     settings: options.settings
                                 };
+                                
                                 // append the message
                                 self.messenger.yiiSimpleChatMessages('append', msg);
                             }
@@ -379,7 +405,9 @@
                             // load new messages
                             self.messenger.yiiSimpleChatMessages('load', 'new');
                             // load new conversations
-                            self.conversations.yiiSimpleChatConversations('load', 'new');
+                            if (typeof self.conversations.yiiSimpleChatConversation === 'function') {
+                        	self.conversations.yiiSimpleChatConversations('load', 'new');
+                    	    }
                         }else{
                             console.error(data);
                         }
@@ -393,17 +421,24 @@
                 });
 
                 // load new messages every 10 seconds
-                setInterval(function () {
+                
+                 self.handler1 = setInterval(function () {
                     self.messenger.yiiSimpleChatMessages('load', 'new');
                 }, 10000);
-
+		
+	
                 // load new conversations every 15 seconds
-                setInterval(function () {
-                    self.conversations.yiiSimpleChatConversations('load', 'new');
-                }, 15000);
+		if (typeof self.conversations.yiiSimpleChatConversations === 'function') {
+
+		    self.handler2 = setInterval(function () {
+			self.conversations.yiiSimpleChatConversations('load', 'new'); 
+            	    }, 15000);
+            	}
             });
         }
     };
+    
     simpleChat.init();
     simpleChat.registerListeners();
+    document.sumpleChat = simpleChat;
 })(jQuery);

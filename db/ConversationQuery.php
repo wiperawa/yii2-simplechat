@@ -24,13 +24,14 @@ class ConversationQuery extends ActiveQuery
         $this->alias('c');
         $this->select([
                  'last_message_id' => new Expression('MAX([[id]])'),
-                 'contact_id' => new Expression('IF([[sender_id]] = :userId, [[receiver_id]], [[sender_id]])')
+                 'contact_id' => new Expression('IF([[sender_id]] = :userId, [[receiver_id]], [[sender_id]])'),
+                 'object_id' => 'object_id',
             ])
             ->andWhere(['or',
                 ['receiver_id' => new Expression(':userId'), 'is_deleted_by_receiver' => false],
                 ['sender_id' => new Expression(':userId'), 'is_deleted_by_sender' => false],
             ])
-            ->groupBy(['contact_id']);
+            ->groupBy(['contact_id','object_id']);
     }
 
     /**
@@ -41,5 +42,10 @@ class ConversationQuery extends ActiveQuery
     public function forUser($userId)
     {
         return $this->addParams(['userId' => $userId]);
+    }
+
+    public function forObject($objectId)
+    {
+        return $this->addParams(['objectId' => $objectId]);
     }
 }

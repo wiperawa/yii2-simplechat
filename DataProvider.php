@@ -10,6 +10,8 @@ use yii\base\Arrayable;
 use yii\base\ArrayableTrait;
 use yii\data\ActiveDataProvider;
 use yii\helpers\ArrayHelper;
+use yii\helpers\BaseArrayHelper;
+
 
 /**
  * Class DataProvider
@@ -39,6 +41,7 @@ class DataProvider extends ActiveDataProvider implements Arrayable
      */
     public function getModels()
     {
+        //$models =  parent::getModels();
         return ArrayHelper::toArray(parent::getModels());
     }
 }

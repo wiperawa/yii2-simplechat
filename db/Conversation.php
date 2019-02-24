@@ -18,7 +18,8 @@ use yii\db\Expression;
  * @package bubasuma\simplechat\db
  *
  * @property int $user_id
- * @property int contact_id
+ * @property int $contact_id
+ * @property int $object_id
  * @property int last_message_id
  *
  * @property-read Message $lastMessage
@@ -42,7 +43,7 @@ class Conversation extends ActiveRecord
      */
     public function getNewMessages()
     {
-        return $this->hasMany(Message::className(), ['sender_id' => 'contact_id', 'receiver_id' => 'user_id'])
+        return $this->hasMany(Message::className(), ['sender_id' => 'contact_id', 'receiver_id' => 'user_id','object_id' => 'object_id'])
             ->andOnCondition(['is_new' => true]);
     }
 
@@ -60,6 +61,7 @@ class Conversation extends ActiveRecord
         if (null !== $key) {
             $query->andHaving([$history ? '<' : '>', 'last_message_id', $key]);
         }
+
         return new DataProvider([
             'query' => $query,
             'key' => 'last_message_id',
@@ -96,16 +98,21 @@ class Conversation extends ActiveRecord
      * @param string $contactId
      * @return array the number of rows updated
      */
-    public static function remove($userId, $contactId)
+    
+    public static function remove($userId, $contactId, $objectId)
     {
         $count = static::updateAll([
             'is_deleted_by_sender' => new Expression('IF([[sender_id]] = :userId, TRUE, is_deleted_by_sender)'),
             'is_deleted_by_receiver' => new Expression('IF([[receiver_id]] = :userId, TRUE, is_deleted_by_receiver)')
-        ], ['or',
-            ['receiver_id' => new Expression(':userId'), 'sender_id' => $contactId, 'is_deleted_by_receiver' => false],
-            ['sender_id' => new Expression(':userId'), 'receiver_id' => $contactId, 'is_deleted_by_sender' => false],
-        ], [
-            'userId' => $userId
+        ], ['and',
+    	    ['or',
+        	['receiver_id' => new Expression(':userId'), 'sender_id' => $contactId, 'is_deleted_by_receiver' => false],
+        	['sender_id' => new Expression(':userId'), 'receiver_id' => $contactId, 'is_deleted_by_sender' => false],
+    	    ],
+    	    ['object_id' => $objectId],
+    	],    
+        [
+            'userId' => $userId,
         ]);
         return compact('count');
     }
@@ -115,13 +122,14 @@ class Conversation extends ActiveRecord
      * @param $contactId
      * @return array the number of rows updated
      */
-    public static function read($userId, $contactId)
+    public static function read($userId, $contactId, $objectId)
     {
         $count = static::updateAll([
                 'is_new' => false
             ], [
                 'receiver_id' => $userId,
                 'sender_id' => $contactId,
+                'object_id' => $objectId,
                 'is_new' => true
             ]);
         return compact('count');
@@ -132,11 +140,14 @@ class Conversation extends ActiveRecord
      * @param $contactId
      * @return array
      */
-    public static function unread($userId, $contactId)
+    public static function unread($userId, $contactId, $objectId)
     {
         /** @var Message $message */
-        $message = Message::find()
-            ->where(['sender_id' => $contactId, 'receiver_id' => $userId, 'is_deleted_by_receiver' => false])
+        
+        $messageClass = static::getMessageClass();
+        
+        $message = $messageClass::find()
+            ->where(['sender_id' => $contactId, 'receiver_id' => $userId, 'object_id' => $objectId, 'is_deleted_by_receiver' => false])
             ->orderBy(['id' => SORT_DESC])
             ->limit(1)
             ->one();
@@ -148,11 +159,17 @@ class Conversation extends ActiveRecord
         return compact('count');
     }
 
+
+    public static function getMessageClass() {
+        return Message::className();
+    }
+    
     /**
      * @inheritDoc
      */
     public static function tableName()
     {
+
         return Message::tableName();
     }
 
@@ -186,7 +203,7 @@ class Conversation extends ActiveRecord
      */
     public function attributes()
     {
-        return ['user_id', 'contact_id', 'last_message_id'];
+        return ['user_id', 'contact_id','object_id', 'last_message_id'];
     }
 
     /**
@@ -194,7 +211,7 @@ class Conversation extends ActiveRecord
      */
     public static function populateRecord($record, $row)
     {
-        foreach (['user_id', 'contact_id'] as $name) {
+        foreach (['user_id', 'contact_id','object_id'] as $name) {
             if (isset($row[$name])) {
                 $row[$name] = intval($row[$name]);
             }

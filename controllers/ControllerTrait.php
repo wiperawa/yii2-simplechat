@@ -72,7 +72,7 @@ trait ControllerTrait
         return $conversationClass::get($userId, $limit, $history, $key);
     }
 
-    public function actionMessages($contactId)
+    public function actionMessages($objectId,$contactId)
     {
         $userId = $this->user->getId();
         $request = \Yii::$app->request;
@@ -81,10 +81,10 @@ trait ControllerTrait
         $history = strcmp('new', $request->get('type', $request->post('type')));
         /** @var $messageClass Message */
         $messageClass = $this->messageClass;
-        return $messageClass::get($userId, $contactId, $limit, $history, $key);
+        return $messageClass::get($userId, $objectId, $contactId, $limit, $history, $key);
     }
 
-    public function actionCreateMessage($contactId)
+    public function actionCreateMessage($contactId, $objectId)
     {
         $userId = $this->user->getId();
         if ($userId == $contactId) {
@@ -93,7 +93,7 @@ trait ControllerTrait
         $text = \Yii::$app->request->post('text');
         /** @var $messageClass Message */
         $messageClass = $this->messageClass;
-        return $messageClass::create($userId, $contactId, $text);
+        return $messageClass::create($userId,$contactId, $objectId, $text);
     }
 
     public function actionDeleteMessage($id)
@@ -101,28 +101,29 @@ trait ControllerTrait
         throw new NotSupportedException(get_class($this) . " does not support actionDeleteMessage($id).");
     }
 
-    public function actionDeleteConversation($contactId)
+    public function actionDeleteConversation($contactId, $objectId)
     {
         $userId = $this->user->getId();
         /** @var $conversationClass Conversation */
         $conversationClass = $this->conversationClass;
-        return $conversationClass::remove($userId, $contactId);
+        return $conversationClass::remove($userId, $contactId, $objectId);
     }
 
-    public function actionMarkConversationAsRead($contactId)
+    public function actionMarkConversationAsRead($contactId, $objectId)
     {
         $userId = $this->user->getId();
         /** @var $conversationClass Conversation */
         $conversationClass = $this->conversationClass;
-        return $conversationClass::read($userId, $contactId);
+        return $conversationClass::read($userId, $contactId, $objectId);
     }
 
-    public function actionMarkConversationAsUnread($contactId)
+    public function actionMarkConversationAsUnread($contactId, $objectId)
     {
         $userId = $this->user->getId();
         /** @var $conversationClass Conversation */
         $conversationClass = $this->conversationClass;
-        return $conversationClass::unread($userId, $contactId);
+
+        return $conversationClass::unread($userId, $contactId, $objectId);
     }
 
     /**

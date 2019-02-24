@@ -25,7 +25,7 @@ use yii\helpers\Html;
  * @property bool is_deleted_by_sender
  * @property bool is_deleted_by_receiver
  * @property string created_at
- *
+ * @property int object_id
  * @property-read mixed newMessages
  *
  * @author Buba Suma <bubasuma@gmail.com>
@@ -36,6 +36,7 @@ class Message extends ActiveRecord
 {
     public static function tableName()
     {
+
         return Migration::TABLE_MESSAGE;
     }
 
@@ -45,7 +46,7 @@ class Message extends ActiveRecord
     public function rules()
     {
         return [
-            [['sender_id', 'receiver_id', 'text', 'created_at'], 'required', 'on' => 'create']
+            [['sender_id', 'receiver_id','object_id', 'text', 'created_at','object_id'], 'required', 'on' => 'create']
         ];
     }
 
@@ -58,9 +59,9 @@ class Message extends ActiveRecord
      * @return DataProvider
      * @since 2.0
      */
-    public static function get($userId, $contactId, $limit, $history = true, $key = null)
+    public static function get($userId,  $objectId, $contactId, $limit, $history = true, $key = null)
     {
-        $query = static::baseQuery($userId, $contactId);
+        $query = static::baseQuery($userId, $contactId,$objectId);
         if (null !== $key) {
             $query->andWhere([$history ? '<' : '>', 'id', $key]);
         }
@@ -77,10 +78,10 @@ class Message extends ActiveRecord
      * @param int $contactId
      * @return MessageQuery
      */
-    protected static function baseQuery($userId, $contactId)
+    protected static function baseQuery($userId, $contactId,$objectId)
     {
         return static::find()
-            ->between($userId, $contactId)
+            ->between($userId, $contactId, $objectId)
             ->orderBy(['id' => SORT_DESC]);
     }
 
@@ -91,12 +92,14 @@ class Message extends ActiveRecord
      * @param string $text
      * @return array|bool returns true on success or errors if validation fails
      */
-    public static function create($userId, $contactId, $text)
+    public static function create($userId, $contactId, $objectId,  $text)
     {
         $instance = new static(['scenario' => 'create']);
+
         $instance->created_at = new Expression('UTC_TIMESTAMP()');
         $instance->sender_id = $userId;
         $instance->receiver_id = $contactId;
+        $instance->object_id = $objectId;
         $instance->text = Html::encode($text);
         $instance->save();
         return $instance->errors;

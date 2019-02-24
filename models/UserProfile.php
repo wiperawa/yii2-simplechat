@@ -27,7 +27,9 @@ class UserProfile extends ActiveRecord
      * @inheritDoc
      */
     public static function tableName()
+
     {
+
         return Migration::TABLE_USER_PROFILE;
     }
 

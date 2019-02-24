@@ -18,11 +18,11 @@ use yii\web\AssetBundle;
 class ChatAsset extends AssetBundle
 {
     public $css = [
-        '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css',
+    //    '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css',
         'css/yiiSimpleChat.css',
     ];
     public $js = [
-        'js/yiiSimpleChat.js'
+        'js/yiiSimpleChat.js?ver=',
     ];
     public $depends = [
         'bubasuma\simplechat\BaseAsset',
@@ -31,6 +31,9 @@ class ChatAsset extends AssetBundle
 
     public function init()
     {
+    $this->js = [
+	'js/yiiSimpleChat.js?ver='.rand(1,1000000),
+    ];
         parent::init();
         $this->sourcePath = __DIR__ . '/assets';
     }

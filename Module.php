@@ -53,6 +53,8 @@ class Module extends \yii\base\Module implements BootstrapInterface
      * @var Connection|array|string the DB connection object or the application component ID of the DB connection.
      */
     public $db = 'db';
+    
+    public $userClass='\bubasuma\simplachat\models\User';
 
     public $controllerNamespace = 'bubasuma\simplechat\controllers';
 
@@ -74,20 +76,24 @@ class Module extends \yii\base\Module implements BootstrapInterface
     {
         if ($app instanceof Web) {
             $app->getUrlManager()->addRules([
-                'messages/<contactId:\d+>' => $this->id . '/default/index',
-                'messages' => $this->id . '/default/index',
+                //'messages/<contactId:\d+>' => $this->id . '/default/index',
+                //'messages' => $this->id . '/default/index',
                 'login-as/<userId:\d+>' => $this->id . '/default/login-as',
-                'chat/get/messages/<contactId:\d+>' => $this->id . '/default/messages',
+                'chat/get/messages/<contactId:\d+>/<objectId:\d+>' => $this->id . '/default/messages',
                 'chat/get/conversations' => $this->id . '/default/conversations',
                 'chat/delete/message/<id:\d+>' => $this->id . '/default/delete-message',
-                'chat/delete/conversation/<contactId:\d+>' => $this->id . '/default/delete-conversation',
-                'chat/post/message/<contactId:\d+>' => $this->id . '/default/create-message',
-                'chat/unread/conversation/<contactId:\d+>' => $this->id . '/default/mark-conversation-as-unread',
-                'chat/read/conversation/<contactId:\d+>' => $this->id . '/default/mark-conversation-as-read',
+                'chat/delete/conversation/<contactId:\d+>/<objectId:\d+>' => $this->id . '/default/delete-conversation',
+                'chat/post/message/<contactId:\d+>/<objectId:\d+>' => $this->id . '/default/create-message',
+                'chat/unread/conversation/<contactId:\d+>/<objectId:\d+>' => $this->id . '/default/mark-conversation-as-unread',
+                'chat/read/conversation/<contactId:\d+>/<objectId:\d+>' => $this->id . '/default/mark-conversation-as-read',
             ], false);
             if (!isset($app->getView()->renderers['twig'])) {
                 $app->getView()->renderers['twig'] = [
                     'class' => 'yii\twig\ViewRenderer',
+                    'cachePath' => '@runtime/Twig/cache',
+                    'options' => [
+                        'cache' => false
+                    ]
                 ];
             }
             $app->getView()->renderers['twig']['globals']['html'] = '\yii\helpers\Html';
@@ -97,6 +103,10 @@ class Module extends \yii\base\Module implements BootstrapInterface
                 'module' => $this,
             ];
         }
+    }
+    
+    public function getUserClass() {
+     return $this->userClass;
     }
 
     /**

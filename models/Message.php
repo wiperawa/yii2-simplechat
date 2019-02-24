@@ -23,6 +23,7 @@ class Message extends \bubasuma\simplechat\db\Message
     {
         return [
             'senderId' => 'sender_id',
+            'objectId' => 'object_id',
             'text',
             'date' => function ($model) {
                 return static::formatDate($model['created_at'])[1];

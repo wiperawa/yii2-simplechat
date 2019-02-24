@@ -29,11 +29,11 @@ class MessageQuery extends ActiveQuery
      * @return $this
      * @since 2.0
      */
-    public function between($userId, $contactId)
+    public function between($userId, $contactId, $objectId)
     {
         return $this->andWhere(['or',
-            ['sender_id' => $contactId, 'receiver_id' => $userId, 'is_deleted_by_receiver' => false],
-            ['sender_id' => $userId, 'receiver_id' => $contactId, 'is_deleted_by_sender' => false],
+            ['sender_id' => $contactId, 'receiver_id' => $userId,'object_id' => $objectId, 'is_deleted_by_receiver' => false],
+            ['sender_id' => $userId, 'receiver_id' => $contactId, 'object_id'  => $objectId, 'is_deleted_by_sender' => false],
         ]);
     }
 }

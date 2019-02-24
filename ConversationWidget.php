@@ -11,6 +11,7 @@ use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\widgets\ListView;
 
+
 /**
  * Class ConversationWidget
  * @package bubasuma\simplechat
@@ -36,6 +37,7 @@ class ConversationWidget extends ListView
     public $clientOptions = [];
 
     public $liveOptions = [];
+    
 
     private $tag;
 
@@ -84,7 +86,7 @@ class ConversationWidget extends ListView
                 'key' => $key,
                 'index' => $index,
                 'user' => $this->user,
-                'isCurrent' => $model['contact']['id'] == $this->current['contact']['id'],
+                'isCurrent' => ($model['contact']['id'] == $this->current['contact']['id'] and $model['object_id'] == $this->current['object_id']),
                 'settings' => $this->clientOptions,
             ], $this->viewParams));
         } else {

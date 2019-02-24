@@ -43,6 +43,8 @@ class Conversation extends \bubasuma\simplechat\db\Conversation
                     'senderId' => $model['lastMessage']['sender_id']
                 ];
             },
+            'object_id',
+            'object',
             'newMessages' => function ($model) {
                 return [
                     'count' => count($model['newMessages'])
@@ -87,26 +89,26 @@ class Conversation extends \bubasuma\simplechat\db\Conversation
 
     public function getLoadUrl()
     {
-        return Url::to(['messages','contactId' => $this->contact_id]);
+        return Url::to(['messages','contactId' => $this->contact_id,'objectId' => $this->object_id]);
     }
 
     public function getSendUrl()
     {
-        return Url::to(['create-message','contactId' => $this->contact_id]);
+        return Url::to(['create-message','contactId' => $this->contact_id,'objectId' => $this->object_id]);
     }
 
     public function getDeleteUrl()
     {
-        return Url::to(['delete-conversation','contactId' => $this->contact_id]);
+        return Url::to(['delete-conversation','contactId' => $this->contact_id,'objectId' => $this->object_id]);
     }
 
     public function getReadUrl()
     {
-        return Url::to(['mark-conversation-as-read','contactId' => $this->contact_id]);
+        return Url::to(['mark-conversation-as-read','contactId' => $this->contact_id,'objectId' => $this->object_id]);
     }
 
     public function getUnreadUrl()
     {
-        return Url::to(['mark-conversation-as-unread','contactId' => $this->contact_id]);
+        return Url::to(['mark-conversation-as-unread','contactId' => $this->contact_id,'objectId' => $this->object_id]);
     }
 }
